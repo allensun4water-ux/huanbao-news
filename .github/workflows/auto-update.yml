@@ -1,0 +1,47 @@
+name: 每日自动采集环保政策
+
+on:
+  schedule:
+    # 每天北京时间早上8点运行（UTC时间0点）
+    - cron: '0 0 * * *'
+  workflow_dispatch:  # 允许手动触发
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+    # 1. 检出代码
+    - name: Checkout
+      uses: actions/checkout@v4
+      
+    # 2. 设置Python环境
+    - name: Setup Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.10'
+        
+    # 3. 安装依赖
+    - name: Install dependencies
+      run: |
+        pip install requests beautifulsoup4
+        
+    # 4. 运行爬虫
+    - name: Run scraper
+      run: python scraper.py
+      
+    # 5. 提交更新的文件
+    - name: Commit and push
+      run: |
+        git config --local user.email "action@github.com"
+        git config --local user.name "GitHub Action"
+        git add index.html
+        git diff --staged --quiet || (git commit -m "🔄 自动更新政策信息 $(date +'%Y-%m-%d')" && git push)
+        
+    # 6. 部署到GitHub Pages（可选，如果要用GitHub托管）
+    - name: Deploy to GitHub Pages
+      uses: peaceiris/actions-gh-pages@v3
+      if: github.ref == 'refs/heads/main'
+      with:
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+        publish_dir: ./
