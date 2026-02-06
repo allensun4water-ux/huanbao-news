@@ -37,7 +37,57 @@ def fetch_housing_policies():
 
 # 生成新的HTML页面
 def generate_html(policies):
-    html_template = """
+    # 读取Kimi原版的模板（假设你保存为 template.html）
+    try:
+        with open('template.html', 'r', encoding='utf-8') as f:
+            template = f.read()
+    except:
+        # 如果找不到模板，使用基础版本
+        template = None
+    
+    if template:
+        # 在模板中找到政策列表的位置，插入新数据
+        # 这里需要根据Kimi的具体HTML结构调整
+        policy_html = generate_kimi_style_cards(policies)
+        
+        # 替换模板中的占位符或旧内容
+        # 假设Kimi的模板中有 <!-- POLICY_LIST --> 标记
+        final_html = template.replace('<!-- POLICY_LIST -->', policy_html)
+        
+        # 更新页面底部的"最后更新时间"
+        final_html = final_html.replace(
+            'id="update-time">', 
+            f'id="update-time">{datetime.now().strftime("%Y年%m月%d日 %H:%M")}'
+        )
+    else:
+        # 备用简单版本
+        final_html = generate_simple_html(policies)
+    
+    with open('index.html', 'w', encoding='utf-8') as f:
+        f.write(final_html)
+
+def generate_kimi_style_cards(policies):
+    """生成Kimi风格的政策卡片HTML"""
+    if not policies:
+        return '<div class="empty-state">暂无最新政策，请稍后查看</div>'
+    
+    cards = ''
+    for p in policies:
+        # 这里需要根据Kimi的实际CSS类名调整
+        cards += f'''
+        <div class="policy-card" data-aos="fade-up">
+            <div class="card-header">
+                <span class="tag">{p['source']}</span>
+                <span class="date">{p['date']}</span>
+            </div>
+            <h3 class="title">{p['title']}</h3>
+            <div class="meta">
+                <span class="countdown">⏰ 征求意见还剩 <strong>23</strong> 天</span>
+                <a href="{p['link']}" target="_blank" class="btn-detail">查看详情 →</a>
+            </div>
+        </div>
+        '''
+    return cards
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
