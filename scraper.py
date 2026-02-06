@@ -59,7 +59,7 @@ def main():
         json.dump(data, f, ensure_ascii=False, indent=2)
     
     print(f"✅ 已生成 data.json，包含 {len(policies)} 条政策")
-    print(f🔄 更新时间：{data['lastUpdate']}")
+    print(f"🔄 更新时间：{data['lastUpdate']}")
 
 if __name__ == '__main__':
     main()
