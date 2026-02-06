@@ -2,8 +2,7 @@ name: 每日自动采集环保政策
 
 on:
   schedule:
-    # 每天北京时间早上8点运行（UTC时间0点）
-    - cron: '0 0 * * *'
+    - cron: '0 0 * * *'  # 每天UTC 0点（北京时间8点）
   workflow_dispatch:  # 允许手动触发
 
 jobs:
@@ -15,33 +14,40 @@ jobs:
     - name: Checkout
       uses: actions/checkout@v4
       
-    # 2. 设置Python环境
+    # 2. 设置Node.js环境（构建React需要）
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        
+    # 3. 设置Python环境（运行爬虫）
     - name: Setup Python
       uses: actions/setup-python@v5
       with:
         python-version: '3.10'
         
-    # 3. 安装依赖
-    - name: Install dependencies
+    # 4. 安装Python依赖
+    - name: Install Python dependencies
       run: |
         pip install requests beautifulsoup4
         
-    # 4. 运行爬虫
+    # 5. 运行爬虫（生成 data.json）
     - name: Run scraper
-      run: python scraper.py
-      
-    # 5. 提交更新的文件
-    - name: Commit and push
       run: |
-        git config --local user.email "action@github.com"
-        git config --local user.name "GitHub Action"
-        git add index.html
-        git diff --staged --quiet || (git commit -m "🔄 自动更新政策信息 $(date +'%Y-%m-%d')" && git push)
+        mkdir -p public
+        python scraper.py
         
-    # 6. 部署到GitHub Pages（可选，如果要用GitHub托管）
+    # 6. 安装Node依赖
+    - name: Install Node dependencies
+      run: npm install
+      
+    # 7. 构建React项目
+    - name: Build project
+      run: npm run build
+      
+    # 8. 部署到GitHub Pages
     - name: Deploy to GitHub Pages
       uses: peaceiris/actions-gh-pages@v3
-      if: github.ref == 'refs/heads/main'
       with:
         github_token: ${{ secrets.GITHUB_TOKEN }}
-        publish_dir: ./
+        publish_dir: ./dist  # React构建后的输出目录（可能是dist或build）
